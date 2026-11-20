@@ -1,0 +1,50 @@
+{
+ "_comment": "Stage 2: the proposed method. 2x2 factorial (exploration: eps-greedy vs MC-dropout TS) x (selector: EXP3 vs EXP3.S) on top of NB2 and NB3, under the paper's drift protocol, 10 seeds. The EXP3 / eps-greedy cells are nb2 / nb3 from reproduction.json (same folder, not rerun). EXP3.S alpha = 1/T = 4e-7 is pre-declared (Auer et al. 2002); other values are in ablations.json. MC dropout: p=0.1 on networks with >= 25 hidden units, S=4 extra passes for the propensity.",
+ "defaults": {
+  "data": "covtype",
+  "seeds": "0-9",
+  "T": 2500000,
+  "period": 500000,
+  "drift": "abrupt"
+ },
+ "runs": [
+  {
+   "name": "nb2_ts",
+   "algo": "nb2",
+   "explore": "ts",
+   "note": "H1: MC-dropout Thompson sampling"
+  },
+  {
+   "name": "nb2_exp3s",
+   "algo": "nb2",
+   "alpha": 4e-07,
+   "note": "H2: EXP3.S, alpha = 1/T fixed in advance"
+  },
+  {
+   "name": "nb2_ts_exp3s",
+   "algo": "nb2",
+   "explore": "ts",
+   "alpha": 4e-07,
+   "note": "H1 + H2 (2x2 cell)"
+  },
+  {
+   "name": "nb3_ts",
+   "algo": "nb3",
+   "explore": "ts",
+   "note": "H1: MC-dropout Thompson sampling"
+  },
+  {
+   "name": "nb3_exp3s",
+   "algo": "nb3",
+   "alpha": 4e-07,
+   "note": "H2: EXP3.S, alpha = 1/T fixed in advance"
+  },
+  {
+   "name": "nb3_ts_exp3s",
+   "algo": "nb3",
+   "explore": "ts",
+   "alpha": 4e-07,
+   "note": "H1 + H2 (2x2 cell)"
+  }
+ ]
+}

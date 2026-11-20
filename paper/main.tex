@@ -1,0 +1,360 @@
+%% ACM Web Conference (WWW) format -- acmart, sigconf. Compile on Overleaf (acmart is preinstalled there).
+%% Do NOT change margins, fonts or \vspace (template rules). Course target: 6-8 pages.
+%% Every table, figure and number comes from  python scripts/report.py  (tables/, figures/, generated/).
+%% Red \TODO markers = things to fill in after the real runs (results prose) or that only you can supply.
+\documentclass[sigconf]{acmart}
+
+\usepackage{booktabs}
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\NB}{\textsc{NeuralBandit}}
+\newcommand{\fig}[1]{\IfFileExists{#1.pdf}{\includegraphics[width=\linewidth]{#1}}{\fbox{\TODO{run scripts/report.py}}}}
+\usepackage{adjustbox}
+%% tables are shrunk to the column/page width if too wide, never enlarged
+\newcommand{\tab}[1]{\IfFileExists{#1}{\begin{adjustbox}{max width=\linewidth}\input{#1}\end{adjustbox}}{\fbox{\TODO{run scripts/report.py}}}}
+\newcommand{\RefAcc}{\TODO{rho}}
+\IfFileExists{generated/macros.tex}{\let\RefAcc\relax\input{generated/macros.tex}}{}
+
+%% ---- Rights / conference block: acmart sample values; replace with what your instructor gives you ----
+\setcopyright{acmlicensed}
+\copyrightyear{2026}
+\acmYear{2026}
+\acmDOI{XXXXXXX.XXXXXXX}
+\acmConference[Conference acronym 'XX]{Make sure to enter the correct conference title}{2026}{City, Country}
+\acmISBN{978-1-4503-XXXX-X/2026/06}
+
+\begin{document}
+
+\title{Uncertainty-Aware Exploration and Shifting-Expert Selection for NeuralBandit under Concept Drift}
+%% Author block: plain text only.
+\author{Your Full Name}
+\affiliation{\institution{Your University}\city{Your City}\country{Your Country}}
+\email{your.email@university.edu}
+\renewcommand{\shortauthors}{Surname}
+
+\begin{abstract}
+\NB{} (Allesiardo et al., 2014) learns a contextual bandit policy with one neural network per arm and two committee
+variants (\NB{}2, \NB{}3) that run networks with different hidden sizes and learning rates and select among them with
+EXP3. We reproduce \NB{}2 and \NB{}3 against Banditron, LinUCB and contextual Thompson sampling on Forest Cover Type,
+with and without the authors' cyclic concept drift, over 10 seeds. The paper leaves the feedback of \NB{}3's per-arm
+selectors unspecified; we show that the natural reading (only the played arm's selector learns) collapses below random
+play, and identify the reading of the pseudo-code that reproduces the reported behaviour. We then ask whether
+uncertainty-aware exploration and shifting-expert selection improve adaptation to drift, testing Thompson-style arm
+selection by Monte-Carlo dropout (H1) and EXP3.S model selection (H2) in a $2\times2$ factorial design, and report
+cumulative regret, post-drift recovery time and runtime on Covertype and two further UCI datasets.
+Our reproduction matches the original's stationary accuracies to within 1.1 points for NB2, NB3, LinUCB and CTS, and
+under drift both committees keep at least 36\% lower cumulative regret than LinUCB. MC-dropout exploration did not
+help (it raised \NB{}2's regret by 6\% and its recovery time by 51\%), whereas EXP3.S lowered \NB{}2's regret by
+4\% and shortened \NB{}3's post-drift recovery by 29\%. On Pendigits and Shuttle, EXP3.S lowered regret for both
+committees (by up to 39\%), but Banditron was best on both, and on the nearly separable Pendigits the committees
+failed to recover after drifts, which we trace to saturating sigmoid outputs under the quadratic loss.
+Code, configurations and a script that generates every table and figure are released.
+\end{abstract}
+
+%% Regenerate at https://dl.acm.org/ccs/ccs.cfm and paste the XML here.
+\begin{CCSXML}
+<ccs2012>
+ <concept><concept_id>10010147.10010257.10010282.10010284</concept_id>
+  <concept_desc>Computing methodologies~Online learning settings</concept_desc><concept_significance>500</concept_significance></concept>
+ <concept><concept_id>10010147.10010257.10010293.10010294</concept_id>
+  <concept_desc>Computing methodologies~Neural networks</concept_desc><concept_significance>300</concept_significance></concept>
+</ccs2012>
+\end{CCSXML}
+\ccsdesc[500]{Computing methodologies~Online learning settings}
+\ccsdesc[300]{Computing methodologies~Neural networks}
+\keywords{contextual bandits, neural networks, Thompson sampling, MC dropout, EXP3.S, concept drift, reproducibility}
+
+\maketitle
+
+\section{Introduction}
+In online advertising and recommendation a system observes a context, chooses one action and sees the reward of that
+action only, while user behaviour changes over time. \NB{} \cite{allesiardo2014neuralbandit} trains one multilayer
+perceptron per action by importance-weighted gradient descent and, because the right network size and learning rate
+are unknown in advance, runs a committee of differently configured networks and selects among them online with EXP3
+\cite{auer2002nonstochastic}: one selector for the whole policy (\NB{}2) or one per action (\NB{}3). On Forest Cover
+Type the committees matched or beat Banditron, LinUCB and contextual Thompson sampling (CTS), with and without drift.
+
+Two design choices limit adaptation. Exploration is $\epsilon$-greedy with a constant rate $\gamma$ that ignores how
+uncertain each network is, and EXP3 competes with the best \emph{fixed} model although after a drift the best model
+can change; the original curves show committees needing up to 350{,}000 of the 500{,}000 rounds between drifts to
+stabilise.
+
+\paragraph{Research question.} Do uncertainty-aware exploration and shifting-expert selection improve \NB{}'s
+adaptation to concept drift? We hypothesise that Thompson-style arm selection by Monte-Carlo (MC) dropout lowers
+cumulative regret (H1) and that EXP3.S model selection shortens post-drift recovery (H2).
+
+\paragraph{Contributions.}
+(1) A from-scratch reproduction of \NB{}2, \NB{}3 and the original baselines under the original protocol, over 10 seeds
+with confidence intervals, documenting every under-specified choice (Sec.~\ref{sec:repro}, Appendix~\ref{app:choices}).
+(2) A reproducibility finding: for \NB{}3 the reading in which only the played arm's selector is updated is
+self-reinforcing and fails; updating every arm's selector with the round's reward, as Algorithm~3 states, works
+(Sec.~\ref{sec:nb3}).
+(3) Two modifications, MC-dropout Thompson sampling and EXP3.S, evaluated in a $2\times2$ factorial design on both
+committees, with a diagnostic that separates slow base networks from slow model selection, ablations, and additional
+datasets (Secs.~\ref{sec:method}--\ref{sec:results}).
+
+\section{Background and Related Work}
+\paragraph{Contextual bandits.} At round $t$ a context $x_t$ is revealed, the learner plays $k_t\in[K]$ and observes
+only $y_{t,k_t}$. LinUCB \cite{li2010linucb} and CTS \cite{agrawal2013cts} assume rewards linear in $x_t$; Banditron
+\cite{kakade2008banditron} is a multiclass perceptron trained from bandit feedback.
+
+\paragraph{\NB{}.} Each arm $k$ has a one-hidden-layer sigmoid network $N^k$ trained with the quadratic loss. With
+$\hat k_t=\arg\max_k N^k(x_t)$ the play distribution is $P_t(k)=(1-\gamma)\mathbb 1[k=\hat k_t]+\gamma/K$, and the
+played arm's network takes the backpropagation step scaled by $1/P_t(k_t)$ (original Eq.~1), whose expectation is the
+full-information step. \NB{}2 runs $M$ such policies (``models'') and an EXP3 over them, with probabilities
+$p_i=(1-\gamma_m)w_i/\sum_j w_j+\gamma_m/M$ and reward $y_t$ for the drawn model; every model's network for the
+played arm is updated. \NB{}3 keeps one EXP3 per arm: each arm draws a model that scores it, and the
+$\epsilon$-greedy rule is applied to these scores.
+
+\paragraph{Neural exploration.} NeuralUCB \cite{zhou2020neuralucb} and NeuralTS \cite{zhang2021neuralts} derive
+exploration from gradient features with regret guarantees; Riquelme et al.\ \cite{riquelme2018showdown} compare
+approximate posteriors for deep Thompson sampling, including dropout; bootstrapped ensembles
+\cite{osband2016bootstrapped} are another approximation. MC dropout is the cheapest of these for a committee of 15
+models $\times$ $K$ networks, which is why we test it.
+
+\paragraph{Non-stationarity.} Discounted and sliding-window UCB \cite{garivier2011ucbswitching} and variation-budget
+analyses \cite{besbes2014nonstationary} address changing reward distributions; EXP3.S \cite{auer2002nonstochastic}
+competes with a \emph{shifting} sequence of experts, the situation a committee faces after a drift.
+
+\section{Reproducing \NB{}}\label{sec:repro}
+\paragraph{Protocol.} As in the original: Forest Cover Type (581{,}012 rows, 7 classes = arms); each of the 10
+continuous variables is recoded into five equal-frequency binary variables, and the 4 wilderness and 40 soil indicators
+are kept (94 binary features, 12 active per row). Reward 1 for the correct class. The shuffled data are replayed in a
+loop from a random start; drift relabels the classes by a circular shift every 500{,}000 rounds (shifts accumulate).
+$\gamma=0.005$, $\gamma_m=0.1$, and 15 models: hidden sizes $\{1,5,25,50,100\}\times$ learning rates
+$\{0.01,0.1,1\}$. We run $T=2.5$M rounds (5 drift segments), 10 seeds (the original averages 10 runs), and measure
+regret against an offline MLP trained on the same binary features, $\rho=\RefAcc$ (original: a 93\% classifier).
+Banditron's $\gamma$, LinUCB's $\alpha$ and CTS's $v$ are not given in the original; we tune each on two seeds disjoint
+from the evaluation seeds with an 8-value grid (Appendix~\ref{app:choices}).
+
+\paragraph{Implementation.} Everything is reimplemented in NumPy/Numba; each context is processed as its list of
+active features, so a 2.5M-round committee run takes minutes on a laptop core. All methods see the same stream and
+drift schedule for a given seed, so comparisons are paired.
+
+\subsection{An under-specified step in \NB{}3}\label{sec:nb3}
+The original does not state what feedback \NB{}3's per-arm selectors receive. If only the played arm's selector is
+updated with $y_t$ (the reading of our first implementation), a model that \emph{over}-predicts its arm makes that arm
+win the argmax more often and so collects more reward; the arm's selector concentrates on over-predicting models and
+the committee ends up playing one arm almost always. Algorithm~3 instead updates \emph{each} arm's EXP3 with the
+round's reward for the model it drew, so that every selector is credited for the joint decision. Table~\ref{tab:abl}
+(row ``played-arm EXP3 only'') quantifies the difference: with only the played arm's selector updated, \NB{}3's
+accuracy over the last 100k rounds falls to 3.7\%, below uniform random play (14.3\%), and its final regret triples
+(1{,}749k vs.\ 550k on the same 5 seeds).
+
+\paragraph{Results.} Table~\ref{tab:repro} and Fig.~\ref{fig:repro} reproduce Fig.~1 of the original.
+Without drift, accuracies over the last 100{,}000 rounds are within 1.1 points of the original for LinUCB, CTS,
+\NB{}3 and \NB{}2, and Banditron is 2.6 points above it; the ordering \NB{}2 $>$ \NB{}3 $>$ LinUCB $\approx$ CTS
+$>$ Banditron is the original's. \NB{}2 also has the lowest stationary regret (347k vs.\ 360k for LinUCB, paired
+Wilcoxon $p=0.010$). Under drift (Fig.~\ref{fig:repro}, right; Table~\ref{tab:drift}) the linear models lose their
+advantage at the first shift: LinUCB and CTS fit one stationary ridge model per arm, take on average 374k and 387k
+rounds to recover (5 and 19 of 40 drifts not recovered before the next one) and end with $1.76\times$ and
+$2.13\times$ \NB{}2's regret; Banditron, which learns slowly but forgets quickly, ends below both. \NB{}2 ends lowest (511k, 43\% below LinUCB, $p=0.002$) and \NB{}3 second (559k; $+9.5\%$ vs.\ \NB{}2,
+95\% CI of the paired difference [13k, 78k], $p=0.049$). Our committees recover in 186k (\NB{}2) and 240k
+(\NB{}3) rounds on average, below the up to 350k rounds visible in the original's curves.
+
+\begin{table}[t]
+\caption{Covertype with a class shift every 500{,}000 rounds: final cumulative regret ($\times10^3$, mean [95\% CI]),
+accuracy over the last 100k rounds, mean recovery time (censored/total drifts), runtime, paired Wilcoxon $p$ against
+\NB{}2 (10 seeds).}\label{tab:drift}
+\tab{tables/tab_drift.tex}
+\end{table}
+
+\begin{table}[t]
+\caption{Stationary reproduction: accuracy over the last 100{,}000 rounds, original vs.\ ours (mean [95\% bootstrap
+CI] over 10 seeds).}\label{tab:repro}
+\tab{tables/tab_repro.tex}
+\end{table}
+
+\begin{figure*}[t]
+\fig{figures/fig1_reproduction}
+\caption{Cumulative regret on Covertype, stationary (left) and with a class shift every 500{,}000 rounds (right, dotted
+lines), mean and 95\% band over 10 seeds. Counterpart of Fig.~1 of the original.}\label{fig:repro}
+\Description{Two line charts of cumulative regret against the round for Banditron, LinUCB, CTS, NB3 and NB2.}
+\end{figure*}
+
+\section{Gaps and Proposed Method}\label{sec:method}
+\textbf{G1} Exploration is a constant $\epsilon$-greedy rate that ignores model uncertainty.
+\textbf{G2} EXP3 competes with the best \emph{fixed} model; after a drift the best model can change, and the original
+committees take up to 350{,}000 rounds to stabilise.
+\textbf{G3} One dataset, one synthetic drift protocol, no confidence intervals.
+\textbf{G4} Slow recovery may come from the base networks rather than from model selection, which no selector can fix.
+
+\subsection{H1: MC-dropout Thompson sampling}
+For networks with at least $h_{\min}=25$ hidden units, each decision draws a dropout mask on the hidden units (rate
+$p=0.1$, inverted scaling); the sampled outputs act as one approximate posterior sample per arm, the arm with the
+highest sample is played, and with probability $\gamma$ a uniform arm is played instead. Training also uses dropout.
+Eq.~1 needs the play probability $P_t(a)$, which has no closed form here; we estimate it from $S=4$ further dropout
+passes, $\hat P_t(a)=(1-\gamma)\hat p_t(a)+\gamma/K$. Hidden activations are computed once per round and only the
+output layer is resampled, so the extra passes are cheap.
+
+\subsection{H2: EXP3.S model selection}
+EXP3.S \cite{auer2002nonstochastic} adds a share of the total weight to every model after each update,
+\begin{equation}\label{eq:exp3s}
+ w_i\leftarrow w_i\,\exp\!\Big(\frac{\gamma_m\hat x_i}{M}\Big)+\frac{\mathrm{e}\,\alpha}{M}\sum_j w_j,
+ \qquad \hat x_i=\mathbb 1[i=m_t]\,\frac{y_t}{p_i},
+\end{equation}
+so a model that became good after a drift can regain probability quickly; $\alpha=0$ is EXP3. We fix $\alpha=1/T$
+before the experiments (the value recommended for a horizon $T$); other values are ablations. In \NB{}3 the same
+update is applied to every per-arm selector.
+
+\section{Experimental Setup}
+\paragraph{Design.} $2\times2$ factorial: exploration ($\epsilon$-greedy vs.\ MC-dropout TS) $\times$ selector (EXP3
+vs.\ EXP3.S), on \NB{}2 and on \NB{}3, under the original drift protocol, 10 seeds, against Banditron, LinUCB and CTS.
+\paragraph{Additional datasets.} Pendigits (10{,}992 rows, 16 attributes, $K=10$) and Shuttle (58{,}000 rows,
+9 attributes, $K=7$, highly imbalanced) from UCI/OpenML, binarised like Covertype, with
+$T=1$M rounds and a class shift every 200{,}000 rounds; \NB{} settings unchanged (not re-tuned), baselines tuned per
+dataset as above.
+\paragraph{Metrics.} Cumulative regret $R_T=\rho T-\sum_t y_{t,k_t}$; accuracy over the last 100{,}000 rounds;
+\emph{recovery time}: rounds after a drift until the 20{,}000-round moving accuracy reaches 95\% of its level over the
+50{,}000 rounds before the drift (a drift not recovered before the next one counts as the full period, and the number
+of such censored drifts is reported); runtime per run.
+\paragraph{Statistics.} Paired over seeds: mean difference, 95\% bootstrap CI, exact Wilcoxon signed-rank test.
+A difference is called lower/higher only if its CI excludes zero; comparisons are not corrected for multiplicity.
+\paragraph{Diagnostic (G4).} In simulation the true label is known, so we also log how often each model's own greedy
+arm is correct and plot the best single model in hindsight per drift segment against the realised policy: if the
+best model itself recovers slowly, selection cannot be the bottleneck.
+
+\section{Results}\label{sec:results}
+\begin{table*}[t]
+\caption{Covertype with drift: \NB{}2 extensions ($2\times2$) and LinUCB. Final cumulative regret ($\times10^3$, mean
+[95\% CI]), accuracy over the last 100k rounds, mean recovery time (censored/total drifts), runtime, paired Wilcoxon
+$p$ against \NB{}2 (10 seeds).}\label{tab:ext2}
+\tab{tables/tab_ext_nb2.tex}
+\end{table*}
+\begin{table*}[t]
+\caption{As Table~\ref{tab:ext2} for \NB{}3.}\label{tab:ext3}
+\tab{tables/tab_ext_nb3.tex}
+\end{table*}
+\begin{figure}[t]
+\fig{figures/fig_ext_nb2}
+\caption{Cumulative regret of the \NB{}2 variants and LinUCB under drift (mean, 95\% band, 10 seeds).}\label{fig:ext}
+\Description{Line chart of cumulative regret against the round for NB2, its three variants and LinUCB.}
+\end{figure}
+\begin{figure}[t]
+\fig{figures/fig_diag_nb2}
+\caption{Diagnostic: moving accuracy of the realised \NB{}2 policy and of the best single model in hindsight per
+drift segment (simulation only; uses true labels).}\label{fig:diag}
+\Description{Two accuracy curves against the round, dropping at every drift.}
+\end{figure}
+
+\paragraph{H1 (MC-dropout TS): not supported.} On \NB{}2, MC-dropout Thompson sampling raised final regret by 31.6k
+($+6.2\%$, 95\% CI [3.5k, 53.8k], $p=0.064$), raised mean recovery time by 95.6k rounds ($+51\%$, CI [64.8k, 129.9k],
+$p=0.002$) and lowered accuracy over the last 100k rounds from 68.3\% to 66.2\% (Table~\ref{tab:ext2}). On \NB{}3
+it made no clear difference ($-0.5\%$, CI [$-42.4$k, 38.5k], $p=0.85$; Table~\ref{tab:ext3}). After a drift the
+networks are confidently wrong rather than uncertain, so dropout noise does not point exploration at the arms that
+changed; it adds noise to every decision, and its estimated propensities and dropout training add variance to the
+Eq.~1 updates. We read this as a limit of dropout as a posterior under non-stationarity, not as evidence against
+uncertainty-aware exploration in general.
+\paragraph{H2 (EXP3.S): partly supported.} EXP3.S lowered \NB{}2's final regret by 19.8k ($-3.9\%$, CI [$-41.3$k,
+$-4.9$k], $p=0.020$), the lowest regret of all methods, but did not change its recovery time ($+14.3$k rounds, CI
+[$-17.3$k, 45.6k], $p=0.49$). On \NB{}3 the effect was the reverse: mean recovery time fell by 69.9k rounds
+($-29\%$, CI [$-99.8$k, $-36.6$k], $p=0.010$) and unrecovered drifts from 6 to 1 of 40, while final regret did not
+clearly change ($+3.0\%$, CI [$-0.6$k, 31.6k], $p=0.11$). \NB{}3 must re-identify a good model in each of $K$
+selectors after a shift, which is where EXP3.S's weight sharing helps recovery; \NB{}2 has one selector, where the
+sharing mostly avoids locking onto a model that later degrades.
+\paragraph{Interaction and diagnostic.} The two changes did not interact: the $2\times2$ interaction contrast on
+final regret was $+1.3$k (CI [$-25.1$k, 36.1k]) for \NB{}2 and $-0.6$k (CI [$-19.2$k, 18.1k]) for \NB{}3, and
+\NB{}3 with both had the shortest recovery of any committee (155k rounds, $-35\%$, $p=0.010$). In the diagnostic
+(Fig.~\ref{fig:diag}) the best single model in hindsight averages 69.3\% moving accuracy against 65.4\% for the
+realised \NB{}2 policy (69.8\% vs.\ 66.2\% with EXP3.S). Selection therefore costs about 4 points, and EXP3.S
+narrows that gap only slightly; the best model itself drops at every shift and climbs back over a few hundred
+thousand rounds, so most of the recovery time is the networks relearning, which no selector can remove (G4).
+\paragraph{Comparison with LinUCB.} On Covertype, every committee variant ends with lower cumulative regret than
+LinUCB under drift ($p=0.002$ for all eight): from 45\% lower for \NB{}2+EXP3.S ($-408.8$k, CI [$-422.0$k, $-395.3$k]) to 36\%
+lower for \NB{}3+EXP3.S. The price is runtime: about 9--14 minutes per 2.5M-round run against 0.6 minutes for LinUCB, with MC
+dropout adding 0--40\% to a committee's runtime.
+\paragraph{Ablations.} Table~\ref{tab:abl} (5 seeds, descriptive). Clipping the importance weight is essential:
+the literal unclipped update doubles \NB{}2's regret (1{,}001k vs.\ 502k) and drops its final accuracy to 42.8\%,
+whereas clip 10 and clip 100 are similar (505k vs.\ 502k). Dividing by the committee's propensity instead of each
+model's own raised regret for both committees (\NB{}2 539k, \NB{}3 640k) although it shortened recovery. Small
+EXP3.S shares help and large ones hurt: $\alpha=10^{-6}$ gave 487k and $\alpha=10^{-4}$ 560k. Every MC-dropout
+setting we tried ($p\in\{0.05,0.1,0.2\}$, $S\in\{1,4,8\}$) had higher regret than \NB{}2 (533k--551k), so the
+negative H1 result does not hinge on these choices.
+\paragraph{Additional datasets.} Table~\ref{tab:extra} and Fig.~\ref{fig:extra}. The ordering of the baselines
+changes: Banditron has the lowest regret on both datasets (Pendigits 228k, Shuttle 78k), and on Pendigits LinUCB (488k)
+also beats every committee (541k--693k), while on Shuttle all committees beat LinUCB (310k) and CTS (466k). On
+Pendigits, \NB{}2 learns before the first drift but then stays near chance (14.3\% over the last 100k rounds; 26 of
+40 drifts not recovered). Pendigits is almost separable ($\rho=0.98$) and is replayed about 90 times, so the networks
+become very confident; with sigmoid outputs and the quadratic loss the gradient $\delta=(y-N)N(1-N)$ vanishes for
+confident outputs, so a network that is confidently wrong after a shift barely learns. Banditron, a perceptron
+without a squashing output, does not have this problem. EXP3.S again helps: it lowered \NB{}2's regret by 7.8\% on
+Pendigits ($p=0.002$) and by 38.5\% on Shuttle (CI [$-111.5$k, $-61.6$k], $p=0.002$), and it nearly doubled
+\NB{}3's final accuracy on Pendigits (48.5\% vs.\ 27.1\%). MC dropout lowered \NB{}2's regret on Pendigits by
+2.9\% ($p=0.037$) and made no clear difference on Shuttle ($p=0.19$).
+
+\begin{table*}[t]
+\caption{Additional datasets with a class shift every 200{,}000 rounds ($T=1$M): final cumulative regret ($\times10^3$,
+mean [95\% CI]) and accuracy over the last 100k rounds, 10 seeds. Paired tests are in \texttt{results/REPORT.md}.}
+\label{tab:extra}
+\tab{tables/tab_extra.tex}
+\end{table*}
+\begin{figure*}[t]
+\begin{minipage}{0.49\linewidth}\fig{figures/fig_pendigits}\end{minipage}\hfill
+\begin{minipage}{0.49\linewidth}\fig{figures/fig_shuttle}\end{minipage}
+\caption{Cumulative regret on Pendigits (left) and Shuttle (right) with a class shift every 200{,}000 rounds (mean,
+95\% band, 10 seeds).}\label{fig:extra}
+\Description{Two line charts of cumulative regret for Banditron, LinUCB, CTS, NB3, NB2, NB2+MCD-TS and NB2+EXP3.S.}
+\end{figure*}
+
+\begin{table*}[t]
+\caption{Ablations on Covertype with drift (seeds 0--4; descriptive, so $p$ values are not interpreted). Runtimes
+are omitted because the machine was suspended during some ablation runs.}\label{tab:abl}
+\tab{tables/tab_ablations.tex}
+\end{table*}
+
+\section{Discussion, Limitations and Future Work}
+The reproduction supports the original's central claim: under the cyclic drift protocol, committees of small
+networks adapt far better than linear contextual bandits, whose single ridge model accumulates stale evidence. The additional datasets qualify this: on Shuttle the committees still beat the linear models, but on
+the nearly separable Pendigits they fail to recover from drift, because confident sigmoid outputs stop learning under
+the quadratic loss, and a simple perceptron is best on both. Of our two modifications, the cheap one (EXP3.S, one
+extra line in the selector update) helped on all three datasets and the uncertainty-based one did not. The diagnostic explains why selection-side changes give modest gains: the base networks, not the selector,
+set the pace of recovery. The \NB{}3 finding is a reminder that a committee's credit-assignment rule can decide
+whether it works at all, and that pseudo-code steps such as ``update each arm's EXP3'' need to be stated exactly.
+\paragraph{Limitations.} (i) The drift is a synthetic class permutation: it changes the label--arm mapping, not the
+covariate distribution. (ii) Additional datasets are small and replayed many times. (iii) Choices the original leaves
+open (Appendix~\ref{app:choices}) affect results. (iv) Dropout is not a calibrated posterior and its play probability
+is estimated. (v) NeuralUCB and NeuralTS were not run (laptop budget). (vi) Comparisons are not corrected for
+multiplicity. (vii) Recovery time is measured against each method's own pre-drift level, so a method that recovers
+quickly to a low level (Banditron, 78k rounds) can look good on this measure alone. (viii) We kept the original
+quadratic loss; its saturation is our explanation for the Pendigits failure, and a cross-entropy loss was not tested.
+\paragraph{Future work.} A cross-entropy loss and change
+detection for the committees' networks; natural covariate drift and real logged-bandit data; NeuralUCB/NeuralTS baselines; learned or LLM-based context encoders for text-based bandits.
+
+\section{Conclusion}
+We reproduced \NB{}2 and \NB{}3 on Covertype to within about one accuracy point of the original and confirmed
+that on Covertype they beat Banditron, LinUCB and CTS under concept drift, after identifying the reading of \NB{}3's selector
+update that makes it work. EXP3.S model selection lowered cumulative regret on all three datasets and shortened \NB{}3's
+post-drift recovery on Covertype, whereas MC-dropout Thompson sampling did not reliably improve either committee; on
+nearly separable data the committees themselves stop adapting. Faster adaptation will
+require making the base networks relearn faster after a change, for example with a
+cross-entropy loss, or by detecting changes and resetting or re-weighting part of the committee.
+
+\section*{Ethics Statement}
+Adaptive recommendation and advertising systems can reinforce engagement-driven feedback loops, and exploration
+exposes users to lower-reward items. Our experiments use public, non-personal benchmark data and a synthetic drift
+process; methods that adapt faster to changing behaviour should be evaluated for fairness and user welfare before
+deployment on personal data.
+
+\begin{acks}
+Final project for the course \emph{Deep Learning for Data Science}.
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{refs}
+
+\appendix
+\section{Choices the Original Leaves Open}\label{app:choices}
+\textbf{Networks.} Biases included; weights $\sim U(-0.5,0.5)$; sigmoid output, quadratic loss,
+$\delta=(y-N)N(1-N)$. \textbf{Eq.~1 propensity.} Each model is an \NB{}1 instance and divides by its own
+$P_t(k_t)$ (\NB{}2 and \NB{}3); the committee's propensity is an ablation. \textbf{Clipping.} The weight
+$1/P_t$ (up to $K/\gamma=1400$) is clipped at 100; no clip and clip 10 are ablations. \textbf{\NB{}3 selectors.} Every
+arm's EXP3 is updated with $y_t$ for the model it drew (Sec.~\ref{sec:nb3}). \textbf{Drift.} Arm of the correct answer
+$=(\text{label}+\lfloor t/500{,}000\rfloor)\bmod K$. \textbf{Baselines.} LinUCB and CTS use disjoint ridge models with
+$A=I+\sum xx^\top$ and the same binary features plus a bias; CTS samples $\tilde\theta^\top x\sim
+\mathcal N(\hat\theta^\top x, v^2x^\top A^{-1}x)$. \textbf{Tuning} (Covertype, seeds 100--101, 1M rounds, one drift; 8
+log-spaced values each, highest mean reward selected): Banditron $\gamma\in[0.001,0.5]$, selected 0.02; LinUCB
+$\alpha\in[0.03,100]$, selected 3; CTS $v\in[0.003,10]$, selected 1. No selected value lies at the edge of its grid;
+the full grid is in \texttt{paper/tables/tab\_tuning\_covtype.tex}.
+\textbf{Stream.} Shuffled per seed, random start, replayed in a loop (about 4 passes at $T=2.5$M).
+
+
+\end{document}

@@ -1,0 +1,72 @@
+{
+ "_comment": "Stage 1: reproduce Fig. 1 of the paper. Right panel: abrupt cyclic drift (labels shifted by one class every 500,000 rounds). Left panel: stationary (*_stat). 10 seeds (paper: 10 runs). NB2/NB3 use the paper's committee (hidden {1,5,25,50,100} x lambda {0.01,0.1,1}), gamma=0.005, gamma_model=0.1. CTS = linear Thompson sampling ('lints'). Baseline parameters come from configs/tuned.json.",
+ "defaults": {
+  "data": "covtype",
+  "seeds": "0-9",
+  "T": 2500000,
+  "period": 500000,
+  "drift": "abrupt"
+ },
+ "runs": [
+  {
+   "name": "random",
+   "algo": "random"
+  },
+  {
+   "name": "banditron",
+   "algo": "banditron",
+   "param": "tuned"
+  },
+  {
+   "name": "linucb",
+   "algo": "linucb",
+   "param": "tuned"
+  },
+  {
+   "name": "lints",
+   "algo": "lints",
+   "param": "tuned"
+  },
+  {
+   "name": "nb2",
+   "algo": "nb2"
+  },
+  {
+   "name": "nb3",
+   "algo": "nb3"
+  },
+  {
+   "name": "random_stat",
+   "algo": "random",
+   "drift": "none"
+  },
+  {
+   "name": "banditron_stat",
+   "algo": "banditron",
+   "drift": "none",
+   "param": "tuned"
+  },
+  {
+   "name": "linucb_stat",
+   "algo": "linucb",
+   "drift": "none",
+   "param": "tuned"
+  },
+  {
+   "name": "lints_stat",
+   "algo": "lints",
+   "drift": "none",
+   "param": "tuned"
+  },
+  {
+   "name": "nb2_stat",
+   "algo": "nb2",
+   "drift": "none"
+  },
+  {
+   "name": "nb3_stat",
+   "algo": "nb3",
+   "drift": "none"
+  }
+ ]
+}

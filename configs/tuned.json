@@ -1,0 +1,22 @@
+{
+ "synthetic": {
+  "banditron": 0.2,
+  "lints": 0.3,
+  "linucb": 30.0
+ },
+ "covtype": {
+  "banditron": 0.02,
+  "lints": 1.0,
+  "linucb": 3.0
+ },
+ "pendigits": {
+  "banditron": 0.1,
+  "lints": 0.003,
+  "linucb": 10.0
+ },
+ "shuttle": {
+  "banditron": 0.02,
+  "lints": 1.0,
+  "linucb": 3.0
+ }
+}

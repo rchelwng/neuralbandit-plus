@@ -1,0 +1,80 @@
+{
+ "_comment": "Stage 3 (optional): sensitivity and interpretation ablations, abrupt drift, 5 seeds (descriptive; the smallest exact two-sided Wilcoxon p with 5 seeds is 0.0625). Compare each row with nb2 / nb3 / nb2_ts / nb2_exp3s from the main configs on the same seeds.",
+ "defaults": {
+  "data": "covtype",
+  "seeds": "0-4",
+  "T": 2500000,
+  "period": 500000,
+  "drift": "abrupt"
+ },
+ "runs": [
+  {
+   "name": "nb2_exp3s_a1e-6",
+   "algo": "nb2",
+   "alpha": 1e-06
+  },
+  {
+   "name": "nb2_exp3s_a1e-5",
+   "algo": "nb2",
+   "alpha": 1e-05
+  },
+  {
+   "name": "nb2_exp3s_a1e-4",
+   "algo": "nb2",
+   "alpha": 0.0001
+  },
+  {
+   "name": "nb2_ts_p0.05",
+   "algo": "nb2",
+   "explore": "ts",
+   "p_drop": 0.05
+  },
+  {
+   "name": "nb2_ts_p0.2",
+   "algo": "nb2",
+   "explore": "ts",
+   "p_drop": 0.2
+  },
+  {
+   "name": "nb2_ts_S1",
+   "algo": "nb2",
+   "explore": "ts",
+   "S": 1
+  },
+  {
+   "name": "nb2_ts_S8",
+   "algo": "nb2",
+   "explore": "ts",
+   "S": 8
+  },
+  {
+   "name": "nb2_behavior",
+   "algo": "nb2",
+   "prop": "behavior",
+   "note": "Eq. 1 with the committee's propensity"
+  },
+  {
+   "name": "nb3_behavior",
+   "algo": "nb3",
+   "prop": "behavior",
+   "note": "Eq. 1 with the committee's propensity"
+  },
+  {
+   "name": "nb3_played_y",
+   "algo": "nb3",
+   "nb3_reward": "y",
+   "note": "only the played arm's EXP3 updated (biased reading of Alg. 3)"
+  },
+  {
+   "name": "nb2_clip10",
+   "algo": "nb2",
+   "ips_clip": 10
+  },
+  {
+   "name": "nb2_noclip",
+   "algo": "nb2",
+   "ips_clip": 1000000000.0,
+   "note": "paper's literal update (no clip)"
+  }
+ ]
+}

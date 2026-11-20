@@ -1,0 +1,132 @@
+{
+ "_comment": "Stage 0: tune the baselines' single free parameter (Banditron gamma, LinUCB alpha, CTS/LinTS v; the paper gives none). Seeds 100-101 are disjoint from the evaluation seeds 0-9. 1M rounds with one drift at 500k. Same grid size for every baseline (8 values, spanning 2 orders of magnitude). NeuralBandit uses the paper's values and is not tuned. Then run scripts/select_tuned.py, which writes configs/tuned.json and warns if a winner is at the edge of its grid. For another dataset: --data <name> --set T=400000 period=200000.",
+ "defaults": {
+  "data": "covtype",
+  "seeds": "100-101",
+  "T": 1000000,
+  "period": 500000,
+  "drift": "abrupt"
+ },
+ "runs": [
+  {
+   "name": "tune_banditron_0.001",
+   "algo": "banditron",
+   "param": 0.001
+  },
+  {
+   "name": "tune_banditron_0.005",
+   "algo": "banditron",
+   "param": 0.005
+  },
+  {
+   "name": "tune_banditron_0.01",
+   "algo": "banditron",
+   "param": 0.01
+  },
+  {
+   "name": "tune_banditron_0.02",
+   "algo": "banditron",
+   "param": 0.02
+  },
+  {
+   "name": "tune_banditron_0.05",
+   "algo": "banditron",
+   "param": 0.05
+  },
+  {
+   "name": "tune_banditron_0.1",
+   "algo": "banditron",
+   "param": 0.1
+  },
+  {
+   "name": "tune_banditron_0.2",
+   "algo": "banditron",
+   "param": 0.2
+  },
+  {
+   "name": "tune_banditron_0.5",
+   "algo": "banditron",
+   "param": 0.5
+  },
+  {
+   "name": "tune_linucb_0.03",
+   "algo": "linucb",
+   "param": 0.03
+  },
+  {
+   "name": "tune_linucb_0.1",
+   "algo": "linucb",
+   "param": 0.1
+  },
+  {
+   "name": "tune_linucb_0.3",
+   "algo": "linucb",
+   "param": 0.3
+  },
+  {
+   "name": "tune_linucb_1.0",
+   "algo": "linucb",
+   "param": 1.0
+  },
+  {
+   "name": "tune_linucb_3.0",
+   "algo": "linucb",
+   "param": 3.0
+  },
+  {
+   "name": "tune_linucb_10.0",
+   "algo": "linucb",
+   "param": 10.0
+  },
+  {
+   "name": "tune_linucb_30.0",
+   "algo": "linucb",
+   "param": 30.0
+  },
+  {
+   "name": "tune_linucb_100.0",
+   "algo": "linucb",
+   "param": 100.0
+  },
+  {
+   "name": "tune_lints_0.003",
+   "algo": "lints",
+   "param": 0.003
+  },
+  {
+   "name": "tune_lints_0.01",
+   "algo": "lints",
+   "param": 0.01
+  },
+  {
+   "name": "tune_lints_0.03",
+   "algo": "lints",
+   "param": 0.03
+  },
+  {
+   "name": "tune_lints_0.1",
+   "algo": "lints",
+   "param": 0.1
+  },
+  {
+   "name": "tune_lints_0.3",
+   "algo": "lints",
+   "param": 0.3
+  },
+  {
+   "name": "tune_lints_1.0",
+   "algo": "lints",
+   "param": 1.0
+  },
+  {
+   "name": "tune_lints_3.0",
+   "algo": "lints",
+   "param": 3.0
+  },
+  {
+   "name": "tune_lints_10.0",
+   "algo": "lints",
+   "param": 10.0
+  }
+ ]
+}

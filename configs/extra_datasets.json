@@ -1,0 +1,77 @@
+{
+ "_comment": "Stage 4: additional UCI datasets with the same protocol, scaled: T = 1,000,000 rounds, labels shifted every 200,000 rounds (4 drifts), 10 seeds. Run once per dataset with --data pendigits / letter / shuttle. NB settings are the paper's (not re-tuned); EXP3.S alpha = 1/T = 1e-6; baselines are tuned per dataset (tuning.json with --data <name> --set T=400000 period=200000).",
+ "defaults": {
+  "data": "pendigits",
+  "seeds": "0-9",
+  "T": 1000000,
+  "period": 200000,
+  "drift": "abrupt"
+ },
+ "runs": [
+  {
+   "name": "random",
+   "algo": "random"
+  },
+  {
+   "name": "banditron",
+   "algo": "banditron",
+   "param": "tuned"
+  },
+  {
+   "name": "linucb",
+   "algo": "linucb",
+   "param": "tuned"
+  },
+  {
+   "name": "lints",
+   "algo": "lints",
+   "param": "tuned"
+  },
+  {
+   "name": "nb2",
+   "algo": "nb2"
+  },
+  {
+   "name": "nb3",
+   "algo": "nb3"
+  },
+  {
+   "name": "nb2_ts",
+   "algo": "nb2",
+   "explore": "ts",
+   "note": "H1: MC-dropout Thompson sampling"
+  },
+  {
+   "name": "nb2_exp3s",
+   "algo": "nb2",
+   "alpha": 1e-06,
+   "note": "H2: EXP3.S, alpha = 1/T fixed in advance"
+  },
+  {
+   "name": "nb2_ts_exp3s",
+   "algo": "nb2",
+   "explore": "ts",
+   "alpha": 1e-06,
+   "note": "H1 + H2 (2x2 cell)"
+  },
+  {
+   "name": "nb3_ts",
+   "algo": "nb3",
+   "explore": "ts",
+   "note": "H1: MC-dropout Thompson sampling"
+  },
+  {
+   "name": "nb3_exp3s",
+   "algo": "nb3",
+   "alpha": 1e-06,
+   "note": "H2: EXP3.S, alpha = 1/T fixed in advance"
+  },
+  {
+   "name": "nb3_ts_exp3s",
+   "algo": "nb3",
+   "explore": "ts",
+   "alpha": 1e-06,
+   "note": "H1 + H2 (2x2 cell)"
+  }
+ ]
+}
