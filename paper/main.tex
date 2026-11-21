@@ -42,12 +42,13 @@ uncertainty-aware exploration and shifting-expert selection improve adaptation t
 selection by Monte-Carlo dropout (H1) and EXP3.S model selection (H2) in a $2\times2$ factorial design, and report
 cumulative regret, post-drift recovery time and runtime on Covertype and two further UCI datasets.
 Our reproduction matches the original's stationary accuracies to within 1.1 points for NB2, NB3, LinUCB and CTS, and
-under drift both committees keep at least 36\% lower cumulative regret than LinUCB. MC-dropout exploration did not
-help (it raised \NB{}2's regret by 6\% and its recovery time by 51\%), whereas EXP3.S lowered \NB{}2's regret by
-4\% and shortened \NB{}3's post-drift recovery by 29\%. On Pendigits and Shuttle, EXP3.S lowered regret for both
+on Covertype under drift both committees keep at least 36\% lower cumulative regret than LinUCB. There, MC-dropout
+exploration did not help (it raised \NB{}2's regret by 6\% and its recovery time by 51\%), whereas EXP3.S lowered \NB{}2's regret by
+4\% and shortened \NB{}3's post-drift recovery by 29\%. On Pendigits and Shuttle, EXP3.S lowered average regret for both
 committees (by up to 39\%), but Banditron was best on both, and on the nearly separable Pendigits the committees
-failed to recover after drifts, which we trace to saturating sigmoid outputs under the quadratic loss.
-Code, configurations and a script that generates every table and figure are released.
+mostly failed to recover after drifts, which we attribute to saturating sigmoid outputs under the quadratic loss.
+Code, configurations and a script that generates every table and figure are released at
+\url{https://github.com/rchelwng/neuralbandit-plus}.
 \end{abstract}
 
 %% Regenerate at https://dl.acm.org/ccs/ccs.cfm and paste the XML here.
@@ -85,8 +86,8 @@ cumulative regret (H1) and that EXP3.S model selection shortens post-drift recov
 \paragraph{Contributions.}
 (1) A from-scratch reproduction of \NB{}2, \NB{}3 and the original baselines under the original protocol, over 10 seeds
 with confidence intervals, documenting every under-specified choice (Sec.~\ref{sec:repro}, Appendix~\ref{app:choices}).
-(2) A reproducibility finding: for \NB{}3 the reading in which only the played arm's selector is updated is
-self-reinforcing and fails; updating every arm's selector with the round's reward, as Algorithm~3 states, works
+(2) An implementation detail that matters: for \NB{}3 the reading in which only the played arm's selector is updated is
+self-reinforcing and fails; updating every arm's selector with the round's reward, our reading of Algorithm~3's ``update of each EXP3'', works
 (Sec.~\ref{sec:nb3}).
 (3) Two modifications, MC-dropout Thompson sampling and EXP3.S, evaluated in a $2\times2$ factorial design on both
 committees, with a diagnostic that separates slow base networks from slow model selection, ablations, and additional
@@ -132,9 +133,11 @@ drift schedule for a given seed, so comparisons are paired.
 
 \subsection{An under-specified step in \NB{}3}\label{sec:nb3}
 The original does not state what feedback \NB{}3's per-arm selectors receive. If only the played arm's selector is
-updated with $y_t$ (the reading of our first implementation), a model that \emph{over}-predicts its arm makes that arm
-win the argmax more often and so collects more reward; the arm's selector concentrates on over-predicting models and
-the committee ends up playing one arm almost always. Algorithm~3 instead updates \emph{each} arm's EXP3 with the
+updated with $y_t$ (the reading of our first implementation), the likely mechanism is self-reinforcing: a model that
+\emph{over}-predicts its arm makes that arm win the argmax more often and so collects more reward, and the arm's
+selector concentrates on over-predicting models. In our diagnostic runs on synthetic data this is what happened: the
+selectors locked onto such models and the committee ended up playing one arm almost always. The last line of Algorithm~3 reads ``Update of each EXP3 weight
+vectors with (3)'' without saying which reward each one receives; we read it as updating \emph{each} arm's EXP3 with the
 round's reward for the model it drew, so that every selector is credited for the joint decision. Table~\ref{tab:abl}
 (row ``played-arm EXP3 only'') quantifies the difference: with only the played arm's selector updated, \NB{}3's
 accuracy over the last 100k rounds falls to 3.7\%, below uniform random play (14.3\%), and its final regret triples
@@ -257,8 +260,8 @@ final regret was $+1.3$k (CI [$-25.1$k, 36.1k]) for \NB{}2 and $-0.6$k (CI [$-19
 (Fig.~\ref{fig:diag}) the best single model in hindsight averages 69.3\% moving accuracy against 65.4\% for the
 realised \NB{}2 policy (69.8\% vs.\ 66.2\% with EXP3.S). Selection therefore costs about 4 points, and EXP3.S
 narrows that gap only slightly; the best model itself drops at every shift and climbs back over a few hundred
-thousand rounds, so most of the recovery time is the networks relearning, which no selector can remove (G4).
-\paragraph{Comparison with LinUCB.} On Covertype, every committee variant ends with lower cumulative regret than
+thousand rounds, so most of the recovery time appears to be the networks relearning, which no selector can remove (G4).
+\paragraph{Comparison with LinUCB\@.} On Covertype, every committee variant ends with lower cumulative regret than
 LinUCB under drift ($p=0.002$ for all eight): from 45\% lower for \NB{}2+EXP3.S ($-408.8$k, CI [$-422.0$k, $-395.3$k]) to 36\%
 lower for \NB{}3+EXP3.S. The price is runtime: about 9--14 minutes per 2.5M-round run against 0.6 minutes for LinUCB, with MC
 dropout adding 0--40\% to a committee's runtime.
@@ -306,9 +309,9 @@ The reproduction supports the original's central claim: under the cyclic drift p
 networks adapt far better than linear contextual bandits, whose single ridge model accumulates stale evidence. The additional datasets qualify this: on Shuttle the committees still beat the linear models, but on
 the nearly separable Pendigits they fail to recover from drift, because confident sigmoid outputs stop learning under
 the quadratic loss, and a simple perceptron is best on both. Of our two modifications, the cheap one (EXP3.S, one
-extra line in the selector update) helped on all three datasets and the uncertainty-based one did not. The diagnostic explains why selection-side changes give modest gains: the base networks, not the selector,
-set the pace of recovery. The \NB{}3 finding is a reminder that a committee's credit-assignment rule can decide
-whether it works at all, and that pseudo-code steps such as ``update each arm's EXP3'' need to be stated exactly.
+extra line in the selector update) helped on all three datasets and the uncertainty-based one did not reliably help. The diagnostic suggests why selection-side changes give modest gains: mainly the base networks, not the selector,
+set the pace of recovery. The \NB{}3 result is a reminder that a committee's credit-assignment rule can decide
+whether it works at all, and that pseudo-code steps such as ``update of each EXP3'' need to state which feedback each component receives.
 \paragraph{Limitations.} (i) The drift is a synthetic class permutation: it changes the label--arm mapping, not the
 covariate distribution. (ii) Additional datasets are small and replayed many times. (iii) Choices the original leaves
 open (Appendix~\ref{app:choices}) affect results. (iv) Dropout is not a calibrated posterior and its play probability
@@ -322,9 +325,9 @@ detection for the committees' networks; natural covariate drift and real logged-
 \section{Conclusion}
 We reproduced \NB{}2 and \NB{}3 on Covertype to within about one accuracy point of the original and confirmed
 that on Covertype they beat Banditron, LinUCB and CTS under concept drift, after identifying the reading of \NB{}3's selector
-update that makes it work. EXP3.S model selection lowered cumulative regret on all three datasets and shortened \NB{}3's
+update that makes it work. EXP3.S model selection lowered \NB{}2's cumulative regret on all three datasets and shortened \NB{}3's
 post-drift recovery on Covertype, whereas MC-dropout Thompson sampling did not reliably improve either committee; on
-nearly separable data the committees themselves stop adapting. Faster adaptation will
+nearly separable data the committees themselves largely stop adapting. Faster adaptation will
 require making the base networks relearn faster after a change, for example with a
 cross-entropy loss, or by detecting changes and resetting or re-weighting part of the committee.
 
