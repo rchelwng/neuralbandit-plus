@@ -1,4 +1,4 @@
-"""Live demo for the talk (~2 min): NB2, NB2+EXP3.S, NB2+MCD-TS and LinUCB on a drifting stream, then a plot.
+"""Demo: NB2, NB2+EXP3.S, NB2+MCD-TS and LinUCB on a drifting stream, then a plot.
 
   python scripts/demo.py               # Covertype if prepared, else synthetic
   python scripts/demo.py --T 600000 --period 200000
