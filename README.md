@@ -1,4 +1,4 @@
-# NeuralBandit++: reproducing *A Neural Networks Committee for the Contextual Bandit Problem* and extending it for concept drift
+# NeuralBandit under Concept Drift: reproducing *A Neural Networks Committee for the Contextual Bandit Problem* and extending it for concept drift
 
 Allesiardo, Féraud, Bouneffouf, ICONIP 2014 ([arXiv 1409.8191](https://arxiv.org/abs/1409.8191)).
 We reproduce NeuralBandit2/3 (NB2, NB3) against Banditron, LinUCB and contextual Thompson sampling (CTS) on Forest
