@@ -38,7 +38,9 @@ if __name__ == "__main__":
         for td in range(a.period, a.T, a.period):
             x.axvline(td, color="grey", ls=":")
         x.set_xlabel("round")
+        x.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v / 1000:.0f}k" if v else "0"))
     ax[0].set_ylabel("cumulative regret (oracle)")
+    ax[0].yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v / 1000:.0f}k" if v else "0"))
     ax[1].set_ylabel("accuracy (20k moving avg.)")
     ax[0].legend()
     fig.tight_layout()
