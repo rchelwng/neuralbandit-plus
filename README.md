@@ -11,7 +11,7 @@ Both are evaluated in a 2×2 factorial design on NB2 and NB3, plus two extra UCI
 recovery time after each drift, runtime. Everything runs on a laptop CPU (NumPy + Numba).
 
 
-**Live demo:** the notebook above runs LinUCB, NB2, NB2+EXP3.S and NB2+MC dropout on Covertype with one drift (≈ 5 min).
+**Live demo:** the notebook below runs LinUCB, NB2, NB2+EXP3.S and NB2+MC dropout on Covertype with one drift (≈ 5 min).
 
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rchelwng/neuralbandit-plus/blob/main/neuralbandit_drift_demo.ipynb)
 
