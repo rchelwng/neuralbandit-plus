@@ -19,11 +19,10 @@
 \begin{document}
 
 \title{Uncertainty-Aware Exploration and Shifting-Expert Selection for NeuralBandit under Concept Drift}
-%% Author block: plain text only.
 \author{Rachel Wong}
-\affiliation{\institution{Columbia Univerisity}\city{New York}\country{United States}}
-\email{rw3024@university.edu}
-\renewcommand{\shortauthors}{Surname}
+\affiliation{\institution{Columbia University}\city{New York}\country{United States}}
+\email{rw3024@columbia.edu}
+\renewcommand{\shortauthors}{Wong}
 
 \begin{abstract}
 \NB{} (Allesiardo et al., 2014) learns a contextual bandit policy with one neural network per arm and two committee
@@ -36,7 +35,7 @@ uncertainty-aware exploration and shifting-expert selection improve adaptation t
 selection by Monte-Carlo dropout (H1) and EXP3.S model selection (H2) in a $2\times2$ factorial design, and report
 cumulative regret, post-drift recovery time and runtime on Covertype and two further UCI datasets.
 Our reproduction matches the original's stationary accuracies to within 1.1 points for NB2, NB3, LinUCB and CTS, and
-on Covertype under drift both committees keep at least 36\% lower cumulative regret than LinUCB. There, MC-dropout
+on Covertype under drift every committee variant has 36--45\% lower cumulative regret than LinUCB. There, MC-dropout
 exploration did not help (it raised \NB{}2's regret by 6\% and its recovery time by 51\%), whereas EXP3.S lowered \NB{}2's regret by
 4\% and shortened \NB{}3's post-drift recovery by 29\%. On Pendigits and Shuttle, EXP3.S lowered average regret for both
 committees (by up to 39\%), but Banditron was best on both, and on the nearly separable Pendigits the committees
@@ -133,13 +132,13 @@ selectors locked onto such models and the committee ended up playing one arm alm
 vectors with (3)'' without saying which reward each one receives; we read it as updating \emph{each} arm's EXP3 with the
 round's reward for the model it drew, so that every selector is credited for the joint decision. Table~\ref{tab:abl}
 (row ``played-arm EXP3 only'') quantifies the difference: with only the played arm's selector updated, \NB{}3's
-accuracy over the last 100k rounds falls to 3.7\%, below uniform random play (14.3\%), and its final regret triples
+accuracy over the last 100k rounds falls to 3.7\%, below uniform random play (14.3\%), and its final regret is 3.2 times as high
 (1{,}749k vs.\ 550k on the same 5 seeds).
 
 \paragraph{Results.} Table~\ref{tab:repro} and Fig.~\ref{fig:repro} reproduce Fig.~1 of the original.
 Without drift, accuracies over the last 100{,}000 rounds are within 1.1 points of the original for LinUCB, CTS,
 \NB{}3 and \NB{}2, and Banditron is 2.6 points above it; the ordering \NB{}2 $>$ \NB{}3 $>$ LinUCB $\approx$ CTS
-$>$ Banditron is the original's. \NB{}2 also has the lowest stationary regret (347k vs.\ 360k for LinUCB, paired
+$>$ Banditron matches the original's, where \NB{}3 and CTS tie at 73\%. \NB{}2 also has the lowest stationary regret (347k vs.\ 360k for LinUCB, paired
 Wilcoxon $p=0.010$). Under drift (Fig.~\ref{fig:repro}, right; Table~\ref{tab:drift}) the linear models lose their
 advantage at the first shift: LinUCB and CTS fit one stationary ridge model per arm, take on average 374k and 387k
 rounds to recover (5 and 19 of 40 drifts not recovered before the next one) and end with $1.76\times$ and
@@ -251,13 +250,13 @@ sharing mostly avoids locking onto a model that later degrades.
 final regret was $+1.3$k (CI [$-25.1$k, 36.1k]) for \NB{}2 and $-0.6$k (CI [$-19.2$k, 18.1k]) for \NB{}3, and
 \NB{}3 with both had the shortest recovery of any committee (155k rounds, $-35\%$, $p=0.010$). In the diagnostic
 (Fig.~\ref{fig:diag}) the best single model in hindsight averages 69.3\% moving accuracy against 65.4\% for the
-realised \NB{}2 policy (69.8\% vs.\ 66.2\% with EXP3.S). Selection therefore costs about 4 points, and EXP3.S
+realised \NB{}2 policy (69.8\% vs.\ 66.2\% with EXP3.S). Selection therefore costs 3.9 points (3.6 with EXP3.S), and EXP3.S
 narrows that gap only slightly; the best model itself drops at every shift and climbs back over a few hundred
 thousand rounds, so most of the recovery time appears to be the networks relearning, which no selector can remove (G4).
 \paragraph{Comparison with LinUCB\@.} On Covertype, every committee variant ends with lower cumulative regret than
 LinUCB under drift ($p=0.002$ for all eight): from 45\% lower for \NB{}2+EXP3.S ($-408.8$k, CI [$-422.0$k, $-395.3$k]) to 36\%
-lower for \NB{}3+EXP3.S. The price is runtime: about 9--14 minutes per 2.5M-round run against 0.6 minutes for LinUCB, with MC
-dropout adding 0--40\% to a committee's runtime.
+lower for \NB{}3+EXP3.S. The price is runtime: 9.3--13.7 minutes per 2.5M-round run against 0.6 minutes for LinUCB, with MC
+dropout adding 9--37\% to a committee's runtime.
 \paragraph{Ablations.} Table~\ref{tab:abl} (5 seeds, descriptive). Clipping the importance weight is essential:
 the literal unclipped update doubles \NB{}2's regret (1{,}001k vs.\ 502k) and drops its final accuracy to 42.8\%,
 whereas clip 10 and clip 100 are similar (505k vs.\ 502k). Dividing by the committee's propensity instead of each
@@ -269,12 +268,12 @@ negative H1 result does not hinge on these choices.
 changes: Banditron has the lowest regret on both datasets (Pendigits 228k, Shuttle 78k), and on Pendigits LinUCB (488k)
 also beats every committee (541k--693k), while on Shuttle all committees beat LinUCB (310k) and CTS (466k). On
 Pendigits, \NB{}2 learns before the first drift but then stays near chance (14.3\% over the last 100k rounds; 26 of
-40 drifts not recovered). Pendigits is almost separable ($\rho=0.98$) and is replayed about 90 times, so the networks
+40 drifts not recovered). Pendigits is almost separable ($\rho=0.98$) and is replayed 91 times, so the networks
 become very confident; with sigmoid outputs and the quadratic loss the gradient $\delta=(y-N)N(1-N)$ vanishes for
 confident outputs, so a network that is confidently wrong after a shift barely learns. Banditron, a perceptron
 without a squashing output, does not have this problem. EXP3.S again helps: it lowered \NB{}2's regret by 7.8\% on
-Pendigits ($p=0.002$) and by 38.5\% on Shuttle (CI [$-111.5$k, $-61.6$k], $p=0.002$), and it nearly doubled
-\NB{}3's final accuracy on Pendigits (48.5\% vs.\ 27.1\%). MC dropout lowered \NB{}2's regret on Pendigits by
+Pendigits ($p=0.002$) and by 38.5\% on Shuttle (CI [$-111.5$k, $-61.6$k], $p=0.002$), and it raised
+\NB{}3's final accuracy on Pendigits from 27.1\% to 48.5\%. MC dropout lowered \NB{}2's regret on Pendigits by
 2.9\% ($p=0.037$) and made no clear difference on Shuttle ($p=0.19$).
 
 \begin{table*}[t]
@@ -316,8 +315,8 @@ quadratic loss; its saturation is our explanation for the Pendigits failure, and
 detection for the committees' networks; natural covariate drift and real logged-bandit data; NeuralUCB/NeuralTS baselines; learned or LLM-based context encoders for text-based bandits.
 
 \section{Conclusion}
-We reproduced \NB{}2 and \NB{}3 on Covertype to within about one accuracy point of the original and confirmed
-that on Covertype they beat Banditron, LinUCB and CTS under concept drift, after identifying the reading of \NB{}3's selector
+We reproduced \NB{}2 and \NB{}3 on Covertype to within 1.1 accuracy points of the original and confirmed
+that on Covertype they beat Banditron, LinUCB and CTS under concept drift, after identifying a reading of \NB{}3's selector
 update that makes it work. EXP3.S model selection lowered \NB{}2's cumulative regret on all three datasets and shortened \NB{}3's
 post-drift recovery on Covertype, whereas MC-dropout Thompson sampling did not reliably improve either committee; on
 nearly separable data the committees themselves largely stop adapting. Faster adaptation will
@@ -350,7 +349,7 @@ $A=I+\sum xx^\top$ and the same binary features plus a bias; CTS samples $\tilde
 log-spaced values each, highest mean reward selected): Banditron $\gamma\in[0.001,0.5]$, selected 0.02; LinUCB
 $\alpha\in[0.03,100]$, selected 3; CTS $v\in[0.003,10]$, selected 1. No selected value lies at the edge of its grid;
 the full grid is in \texttt{paper/tables/tab\_tuning\_covtype.tex} in the repository.
-\textbf{Stream.} Shuffled per seed, random start, replayed in a loop (about 4 passes at $T=2.5$M).
+\textbf{Stream.} Shuffled per seed, random start, replayed in a loop (4.3 passes at $T=2.5$M).
 
 
 \end{document}
