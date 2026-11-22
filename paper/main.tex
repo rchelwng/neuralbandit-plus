@@ -37,7 +37,7 @@ variants (\NB{}2, \NB{}3) that run networks with different hidden sizes and lear
 EXP3. We reproduce \NB{}2 and \NB{}3 against Banditron, LinUCB and contextual Thompson sampling on Forest Cover Type,
 with and without the authors' cyclic concept drift, over 10 seeds. The paper leaves the feedback of \NB{}3's per-arm
 selectors unspecified; we show that the natural reading (only the played arm's selector learns) collapses below random
-play, and identify the reading of the pseudo-code that reproduces the reported behaviour. We then ask whether
+play, and identify a reading of the pseudo-code that reproduces behaviour similar to that reported. We then ask whether
 uncertainty-aware exploration and shifting-expert selection improve adaptation to drift, testing Thompson-style arm
 selection by Monte-Carlo dropout (H1) and EXP3.S model selection (H2) in a $2\times2$ factorial design, and report
 cumulative regret, post-drift recovery time and runtime on Covertype and two further UCI datasets.
@@ -270,7 +270,7 @@ the literal unclipped update doubles \NB{}2's regret (1{,}001k vs.\ 502k) and dr
 whereas clip 10 and clip 100 are similar (505k vs.\ 502k). Dividing by the committee's propensity instead of each
 model's own raised regret for both committees (\NB{}2 539k, \NB{}3 640k) although it shortened recovery. Small
 EXP3.S shares help and large ones hurt: $\alpha=10^{-6}$ gave 487k and $\alpha=10^{-4}$ 560k. Every MC-dropout
-setting we tried ($p\in\{0.05,0.1,0.2\}$, $S\in\{1,4,8\}$) had higher regret than \NB{}2 (533k--551k), so the
+setting we tested ($p\in\{0.05,0.1,0.2\}$, $S\in\{1,4,8\}$) had higher regret than \NB{}2 (533k--551k), so the
 negative H1 result does not hinge on these choices.
 \paragraph{Additional datasets.} Table~\ref{tab:extra} and Fig.~\ref{fig:extra}. The ordering of the baselines
 changes: Banditron has the lowest regret on both datasets (Pendigits 228k, Shuttle 78k), and on Pendigits LinUCB (488k)
@@ -286,7 +286,7 @@ Pendigits ($p=0.002$) and by 38.5\% on Shuttle (CI [$-111.5$k, $-61.6$k], $p=0.0
 
 \begin{table*}[t]
 \caption{Additional datasets with a class shift every 200{,}000 rounds ($T=1$M): final cumulative regret ($\times10^3$,
-mean [95\% CI]) and accuracy over the last 100k rounds, 10 seeds. Paired tests are in \texttt{results/REPORT.md}.}
+mean [95\% CI]) and accuracy over the last 100k rounds, 10 seeds. Paired tests are in \texttt{results/REPORT.md} in the repository.}
 \label{tab:extra}
 \tab{tables/tab_extra.tex}
 \end{table*}
@@ -347,7 +347,7 @@ Final project for the course \emph{Deep Learning for Data Science}.
 \appendix
 \section{Choices the Original Leaves Open}\label{app:choices}
 \textbf{Networks.} Biases included; weights $\sim U(-0.5,0.5)$; sigmoid output, quadratic loss,
-$\delta=(y-N)N(1-N)$. \textbf{Eq.~1 propensity.} Each model is an \NB{}1 instance and divides by its own
+$\delta=(y-N)N(1-N)$. \textbf{Eq.~1 propensity.} Each model is a \NB{}1 instance and divides by its own
 $P_t(k_t)$ (\NB{}2 and \NB{}3); the committee's propensity is an ablation. \textbf{Clipping.} The weight
 $1/P_t$ (up to $K/\gamma=1400$) is clipped at 100; no clip and clip 10 are ablations. \textbf{\NB{}3 selectors.} Every
 arm's EXP3 is updated with $y_t$ for the model it drew (Sec.~\ref{sec:nb3}). \textbf{Drift.} Arm of the correct answer
@@ -356,7 +356,7 @@ $A=I+\sum xx^\top$ and the same binary features plus a bias; CTS samples $\tilde
 \mathcal N(\hat\theta^\top x, v^2x^\top A^{-1}x)$. \textbf{Tuning} (Covertype, seeds 100--101, 1M rounds, one drift; 8
 log-spaced values each, highest mean reward selected): Banditron $\gamma\in[0.001,0.5]$, selected 0.02; LinUCB
 $\alpha\in[0.03,100]$, selected 3; CTS $v\in[0.003,10]$, selected 1. No selected value lies at the edge of its grid;
-the full grid is in \texttt{paper/tables/tab\_tuning\_covtype.tex}.
+the full grid is in \texttt{paper/tables/tab\_tuning\_covtype.tex} in the repository.
 \textbf{Stream.} Shuffled per seed, random start, replayed in a loop (about 4 passes at $T=2.5$M).
 
 
